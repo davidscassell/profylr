@@ -1,0 +1,6 @@
+CXX_STD = CXX17
+# Same floating-point contract as Makevars: no fast-math flag is passed.
+# MinGW GCC defaults to -fno-fast-math. MSVC is not given /fp:fast.
+# -ffp-contract=off, NDEBUG, and EIGEN_NO_DEBUG match the other build paths.
+PKG_CXXFLAGS = -I../inst/include -DEIGEN_DONT_PARALLELIZE -DNDEBUG -DEIGEN_NO_DEBUG -ffp-contract=off -pthread
+PKG_LIBS = -pthread

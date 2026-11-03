@@ -1,0 +1,44 @@
+Third-party notices for profylr
+
+profylr itself is Copyright (c) 2026 David S. Cassell and is MIT licensed.
+See LICENSE.md.
+
+Eigen 3.4.0
+-----------
+The sources under inst/include/Eigen are Eigen 3.4.0. Eigen's own
+COPYING.README says Eigen is primarily MPL-2.0 and that some files contain
+third-party code under BSD or LGPL licenses. The texts are the Eigen 3.4.0
+files COPYING.MPL2, COPYING.BSD, COPYING.APACHE, COPYING.LGPL, and
+COPYING.README, stored in that directory. This source package contains those
+files. They were taken from the Eigen 3.4.0 release. The upstream archive is
+
+https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.bz2
+
+and the tag page is https://gitlab.com/libeigen/eigen/-/tags/3.4.0.
+
+Parts that are not MPL-2.0 alone:
+
+- Intel Corporation, 2011, BSD-3-Clause, on the MKL/LAPACKE binding headers.
+  The notice is COPYING.BSD and is also in those headers.
+- Willow Garage, Inc. (2011-2014) and Open Source Robotics Foundation
+  (2014-2015), BSD-3-Clause, on AlignedBox::transform.
+- TensorFlow Authors, 2017, Apache-2.0, on BFloat16.h. The Apache-2.0 text
+  is COPYING.APACHE.
+- Intel Corporation, 2001, permissive notice on the 4x4 inverse in
+  InverseSize4.h. The header keeps that notice, including the word
+  "Permition" as upstream wrote it.
+- IncompleteLUT.h is MPL-2.0. Its header says the implementation is derived
+  from the LGPL SPARSKIT ILUT and that Yousef Saad permitted relicensing that
+  implementation to MPL2 (Eigen mailing list, 8 July 2012). COPYING.LGPL is
+  the upstream LGPL 2.1 text, retained unchanged because COPYING.README names
+  it. It is not a claim that IncompleteLUT.h remains LGPL.
+
+Four Eigen headers have no license header of their own:
+src/Core/arch/HIP/hcc/math_constants.h, src/misc/blas.h, src/misc/lapack.h,
+and src/misc/lapacke_mangling.h. They are shipped as part of Eigen 3.4.0 and
+are covered by the COPYING files above.
+
+Rcpp
+----
+Rcpp is not vendored. It is linked at build time. Rcpp is GPL-2.0-only OR
+GPL-3.0-only. Generated RcppExports files are project code.

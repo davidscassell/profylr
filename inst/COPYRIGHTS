@@ -1,0 +1,38 @@
+profylr
+Copyright (c) 2026 David S. Cassell
+
+The package code is under the MIT License. The source repository keeps the
+full MIT text in LICENSE.md. The LICENSE file installed with the package is
+the CRAN YEAR / COPYRIGHT HOLDER form.
+
+This package bundles Eigen 3.4.0 in inst/include/Eigen. Eigen is primarily
+Mozilla Public License 2.0. Some files also carry:
+
+- BSD-3-Clause, Intel Corporation (2011), for the MKL/LAPACKE bindings.
+- BSD-3-Clause, Willow Garage, Inc. and Open Source Robotics Foundation, for
+  AlignedBox::transform in src/Geometry/AlignedBox.h.
+- Apache License 2.0, TensorFlow Authors (2017), for src/Core/arch/Default/BFloat16.h.
+- An Intel Corporation 2001 permissive notice, retained in
+  src/LU/arch/InverseSize4.h.
+- IncompleteLUT.h is MPL-2.0. Its header records that the SPARSKIT ILUT
+  implementation it is derived from was LGPL, and that the author permitted
+  relicensing that implementation to MPL2. COPYING.LGPL is retained unchanged
+  because the upstream COPYING.README names it.
+
+The license texts shipped with this copy of Eigen are:
+
+- inst/include/Eigen/COPYING.README
+- inst/include/Eigen/COPYING.MPL2
+- inst/include/Eigen/COPYING.BSD
+- inst/include/Eigen/COPYING.APACHE
+- inst/include/Eigen/COPYING.LGPL
+
+Four headers in that tree have no per-file license header. They are part of
+the Eigen 3.4.0 distribution and are covered by those COPYING files:
+
+- src/Core/arch/HIP/hcc/math_constants.h
+- src/misc/blas.h
+- src/misc/lapack.h
+- src/misc/lapacke_mangling.h
+
+A longer notice is in inst/THIRD_PARTY_NOTICES.
