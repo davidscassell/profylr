@@ -10,11 +10,10 @@
 record_selection(comparison, chosen, rationale)
 }
 \arguments{
-  \item{comparison}{Argument \code{comparison}.}
-  \item{chosen}{Argument \code{chosen}.}
-  \item{rationale}{Argument \code{rationale}.}
+  \item{comparison}{Comparison table the rationale is attached to.}
+  \item{chosen}{Model identifier the analyst selects.}
+  \item{rationale}{Analyst's reason for the recorded choice.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  A \code{profylr_selection} record of the analyst's choice.
 }

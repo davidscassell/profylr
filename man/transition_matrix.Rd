@@ -10,9 +10,8 @@
 transition_matrix(fit)
 }
 \arguments{
-  \item{fit}{Argument \code{fit}.}
+  \item{fit}{A fitted model.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  The transition rows from \code{tidy(fit)}.
 }

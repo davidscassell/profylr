@@ -1,0 +1,7 @@
+CXX_STD = CXX17
+# Same contract as Makevars.in. configure.win writes src/Makevars.win.
+# MinGW GCC defaults to -fno-fast-math. MSVC is not given /fp:fast.
+# LTA_FP_CONTRACT is -ffp-contract=off when that flag is accepted.
+LTA_FP_CONTRACT = @LTA_FP_CONTRACT@
+PKG_CXXFLAGS = -I../inst/include -DEIGEN_DONT_PARALLELIZE -DNDEBUG -DEIGEN_NO_DEBUG $(LTA_FP_CONTRACT) -pthread
+PKG_LIBS = -pthread

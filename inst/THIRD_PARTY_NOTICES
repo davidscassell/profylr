@@ -1,7 +1,7 @@
 Third-party notices for profylr
 
 profylr itself is Copyright (c) 2026 David S. Cassell and is MIT licensed.
-See LICENSE.md.
+See LICENSE and the Authors@R field in DESCRIPTION.
 
 Eigen 3.4.0
 -----------

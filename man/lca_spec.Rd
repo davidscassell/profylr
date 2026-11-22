@@ -10,10 +10,9 @@
 lca_spec(n_states, ...)
 }
 \arguments{
-  \item{n_states}{Argument \code{n_states}.}
-  \item{...}{Argument \code{...}.}
+  \item{n_states}{Number of latent states.}
+  \item{...}{Further specification arguments. See lta_spec.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  A latent class specification.
 }

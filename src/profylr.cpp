@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <cstdint>
 #include <string>
 
@@ -70,6 +71,43 @@ lta::Spec spec_from(const List& d) {
         if (st.containsElementNamed("cov") && !Rf_isNull(st["cov"]))
             s.start.cov = as<std::vector<double>>(st["cov"]);
     }
+    if (d.containsElementNamed("estep") && !Rf_isNull(d["estep"])) {
+        const std::string estep = as<std::string>(d["estep"]);
+        if (estep == "stored") s.estep = lta::ESTEP_STORED;
+        else if (estep == "streaming") s.estep = lta::ESTEP_STREAMING;
+        else throw std::invalid_argument("estep must be \"stored\" or \"streaming\"");
+    }
+    if (d.containsElementNamed("posteriors") && !Rf_isNull(d["posteriors"]))
+        s.posteriors = as<bool>(d["posteriors"]);
+    if (d.containsElementNamed("estep_threads") && !Rf_isNull(d["estep_threads"])) {
+        const char* message = "estep_threads must be a finite whole number from 1 to 1024";
+        SEXP raw = d["estep_threads"];
+        if (Rf_isLogical(raw) || Rf_length(raw) != 1) throw std::invalid_argument(message);
+        double threads = 0;
+        if (Rf_isInteger(raw)) {
+            const int value = INTEGER(raw)[0];
+            if (value == NA_INTEGER) throw std::invalid_argument(message);
+            threads = static_cast<double>(value);
+        } else if (Rf_isReal(raw)) {
+            threads = REAL(raw)[0];
+            if (!std::isfinite(threads) || std::trunc(threads) != threads)
+                throw std::invalid_argument(message);
+        } else {
+            throw std::invalid_argument(message);
+        }
+        if (threads < 1.0 || threads > static_cast<double>(lta::kMaxEstepThreads))
+            throw std::invalid_argument(message);
+        s.estep_threads = static_cast<int>(threads);
+    }
+    if (d.containsElementNamed("patterns") && !Rf_isNull(d["patterns"])) {
+        SEXP raw = d["patterns"];
+        if (!Rf_isString(raw) || Rf_length(raw) != 1)
+            throw std::invalid_argument("patterns must be \"none\" or \"compress\"");
+        const std::string patterns = as<std::string>(raw);
+        if (patterns == "none") s.patterns = lta::PATTERNS_NONE;
+        else if (patterns == "compress") s.patterns = lta::PATTERNS_COMPRESS;
+        else throw std::invalid_argument("patterns must be \"none\" or \"compress\"");
+    }
     if (d.containsElementNamed("covariates") && !Rf_isNull(d["covariates"])) {
         lta::CovariateSpec c;
         c.names = as<std::vector<std::string>>(d["covariates"]);
@@ -88,7 +126,7 @@ List fit_to(const lta::FitResult& r) {
     std::string status = r.status == lta::STATUS_OK ? "ok" : r.status == lta::STATUS_WARNED ? "warned" : "unusable";
     CharacterVector family(r.family.size());
     for (size_t i = 0; i < r.family.size(); ++i) family[i] = lta::family_name(r.family[i]);
-    return List::create(
+    List out = List::create(
         _["status"] = status, _["status_reason"] = r.status_reason, _["engine"] = r.engine,
         _["schema_version"] = r.schema_version, _["loglik"] = r.loglik, _["converged"] = r.converged,
         _["regularized"] = r.regularized, _["ic_supported"] = r.ic_supported, _["n_iter"] = r.n_iter,
@@ -148,6 +186,14 @@ List fit_to(const lta::FitResult& r) {
         _["n_monotone"] = r.n_monotone, _["n_intermittent"] = r.n_intermittent,
         _["n_complete_subjects"] = r.n_complete_subjects,
         _["hard_transitions"] = r.hard_transitions);
+    if (r.estep == lta::ESTEP_STREAMING)
+        out["posteriors_computed"] = r.posteriors_computed;
+    if (r.patterns == lta::PATTERNS_COMPRESS) {
+        out["patterns"] = "compress";
+        out["n_patterns"] = r.n_patterns;
+        out["pattern_id"] = r.pattern_id;
+    }
+    return out;
 }
 
 lta::Params params_from(const List& p) {
@@ -178,6 +224,10 @@ lta::FitResult fit_from(const List& d) {
     r.converged = field_or<bool>(d, "converged", false);
     r.regularized = field_or<bool>(d, "regularized", false);
     r.ic_supported = field_or<bool>(d, "ic_supported", false);
+    if (d.containsElementNamed("posteriors_computed") && !Rf_isNull(d["posteriors_computed"])) {
+        r.posteriors_computed = as<bool>(d["posteriors_computed"]);
+        r.estep = lta::ESTEP_STREAMING;
+    }
     r.n_iter = field_or<int>(d, "n_iter", 0);
     r.n_starts = field_or<int>(d, "n_starts", 0);
     r.n_full = field_or<int>(d, "n_full", 0);
@@ -333,6 +383,11 @@ List cpp_build_info() {
 // [[Rcpp::export]]
 List cpp_fit(List panel, List spec) {
     return fit_to(lta::fit(panel_from(panel), spec_from(spec), nullptr));
+}
+
+// [[Rcpp::export]]
+bool cpp_logliks_replicate(double ll, double best, double replicate_tol) {
+    return lta::logliks_replicate(ll, best, replicate_tol);
 }
 
 // [[Rcpp::export]]
@@ -573,8 +628,14 @@ int cpp_blrt_hardware_threads() {
 
 // [[Rcpp::export]]
 List cpp_blrt_fit_draws(List panels, LogicalVector present, List h0, List h1, double base,
-                        int max_retries, int n_threads) {
+                        int max_retries, int n_threads, Nullable<IntegerVector> draws = R_NilValue) {
     if (panels.size() != present.size()) stop("panels and present must have the same length");
+    std::vector<int> draw_ids;
+    if (draws.isNotNull()) {
+        IntegerVector ids(draws.get());
+        if (ids.size() != panels.size()) stop("draws and panels must have the same length");
+        draw_ids.assign(ids.begin(), ids.end());
+    }
     const auto convert_t0 = std::chrono::steady_clock::now();
     std::vector<lta::BlrtDrawJob> jobs(panels.size());
     for (R_xlen_t i = 0; i < panels.size(); ++i) {
@@ -588,7 +649,7 @@ List cpp_blrt_fit_draws(List panels, LogicalVector present, List h0, List h1, do
     std::vector<lta::WorkerLoad> loads;
     auto rows = lta::blrt_fit_draws(jobs, spec_from(h0), spec_from(h1),
                                     static_cast<std::uint64_t>(base), max_retries, n_threads,
-                                    [] { Rcpp::checkUserInterrupt(); }, &loads);
+                                    [] { Rcpp::checkUserInterrupt(); }, &loads, draw_ids);
     const auto engine_s = std::chrono::duration<double>(std::chrono::steady_clock::now() - engine_t0).count();
     const auto export_t0 = std::chrono::steady_clock::now();
     LogicalVector ok(rows.size());

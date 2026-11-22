@@ -10,10 +10,9 @@
 compare_transitions(equal_fit, free_fit)
 }
 \arguments{
-  \item{equal_fit}{Argument \code{equal_fit}.}
-  \item{free_fit}{Argument \code{free_fit}.}
+  \item{equal_fit}{Fit with transitions held equal.}
+  \item{free_fit}{Fit with transitions free across intervals.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  The likelihood-ratio comparison of the equal and free transition fits.
 }

@@ -409,8 +409,8 @@ test_that("BLRT prints its cost and stays unvalidated", {
     expect_equal(out$p_ci_method, "wilson_95")
   }
   expect_match(out$reason, "Dropped")
-  expect_match(out$reason, "Mplus TECH14 p=b/B")
-  expect_match(out$reason, "(b+1)/(B+1)", fixed = TRUE)
+  expect_match(out$reason, "Mplus TECH14 p=b/n_ok")
+  expect_match(out$reason, "(b+1)/(n_ok+1)", fixed = TRUE)
   expect_match(out$reason, "p_plus", fixed = TRUE)
   expect_match(out$reason, "secondary")
   expect_false("p_mplus" %in% names(out))
@@ -808,7 +808,7 @@ read_tech14 <- function(name) {
 test_that("TECH14 fixtures match the likelihood ratio and the p-value within Monte Carlo error", {
   expect_equal(lpa_spec(2)$max_iter, 200L)
   expect_false(selection_rule()$blrt)
-  # Guard that p is b/B. Independent runs are not required to match. 0.06 is wider
+  # Guard that p is b/n_ok. Independent runs are not required to match. 0.06 is wider
   # than one Monte Carlo SE at B=100 and rejects a different statistic.
   tolerance <- 0.06
   controls <- list(
@@ -849,8 +849,8 @@ test_that("TECH14 fixtures match the likelihood ratio and the p-value within Mon
     expect_false("p_mplus" %in% names(out))
     expect_match(out$reason, paste0("Dropped ", out$n_failed, " draws"), fixed = TRUE)
     expect_match(out$reason, paste0(out$n_not_replicated, " kept draws did not replicate"), fixed = TRUE)
-    expect_match(out$reason, "Mplus TECH14 p=b/B")
-    expect_match(out$reason, "p_plus=(b+1)/(B+1)", fixed = TRUE)
+    expect_match(out$reason, "Mplus TECH14 p=b/n_ok")
+    expect_match(out$reason, "p_plus=(b+1)/(n_ok+1)", fixed = TRUE)
     expect_equal(out$p, out$b / out$n_ok)
     expect_equal(out$p_plus, (out$b + 1) / (out$n_ok + 1))
     expect_lte(abs(out$p - printed$p), tolerance)

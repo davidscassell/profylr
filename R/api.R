@@ -23,15 +23,54 @@ build_info <- function() {
   info
 }
 
+.pattern_mode <- function(value) {
+  if (!is.character(value) || length(value) != 1L || is.na(value) ||
+      !(value %in% c("none", "compress"))) {
+    stop("patterns must be \"none\" or \"compress\"", call. = FALSE)
+  }
+  value
+}
+
+.estep_thread_count <- function(value) {
+  # 1024 matches kMaxEstepThreads and is below .Machine$integer.max, so
+  # as.integer cannot turn an accepted value into NA_integer_.
+  if (is.logical(value) || length(value) != 1L || !is.numeric(value) ||
+      is.na(value) || !is.finite(value) || value != trunc(value) ||
+      value < 1 || value > 1024) {
+    stop("estep_threads must be a finite whole number from 1 to 1024", call. = FALSE)
+  }
+  as.integer(value)
+}
+
+#' Latent transition specification.
+#'
+#' @param n_states Number of latent states.
+#' @param covariance Covariance structure. \code{NULL} is a latent class model.
+#' @param measurement_invariant,means_invariant,covariance_invariant
+#'   Hold the named block equal across waves.
+#' @param transitions \code{equal} or \code{free} transition matrices.
+#' @param n_starts,screen_iter,n_full Random-start schedule.
+#' @param max_iter,tol EM iteration cap and relative convergence tolerance.
+#' @param replicate_tol Absolute log-likelihood gap that still counts as one solution.
+#' @param n_threads,seed,align_labels Worker count, seed, and label alignment.
+#' @param covariates Refused in Release 1.
+#' @param start,append_start Optional supplied start.
+#' @param estep \code{stored} or \code{streaming}.
+#' @param posteriors Return posterior state probabilities.
+#' @param estep_threads Threads inside one E-step. A start or bootstrap worker forces this to 1.
+#' @param patterns \code{none} or \code{compress}.
 #' @export
 lta_spec <- function(n_states, covariance = "VVV", measurement_invariant = TRUE,
                      means_invariant = TRUE, covariance_invariant = TRUE,
                      transitions = c("equal", "free"), n_starts = 40L,
                      screen_iter = 10L, n_full = 4L, max_iter = 200L,
-                     tol = 1e-7, replicate_tol = 1e-3, n_threads = 1L,
+                     tol = 1e-7, replicate_tol = 0.1, n_threads = 1L,
                      seed = 1, align_labels = TRUE, covariates = NULL, start = NULL,
-                     append_start = FALSE) {
+                     append_start = FALSE, estep = c("stored", "streaming"),
+                     posteriors = TRUE, estep_threads = 1L,
+                     patterns = "none") {
   transitions <- match.arg(transitions)
+  estep <- match.arg(estep)
   if (!is.null(covariates) && length(covariates)) {
     stop("Covariates are not estimated in Release 1. They are a separate role ",
          "from indicators and were not dropped into the measurement model.",
@@ -54,6 +93,13 @@ lta_spec <- function(n_states, covariance = "VVV", measurement_invariant = TRUE,
     seed = as.numeric(seed),
     align_labels = isTRUE(align_labels)
   )
+  # Absent keys keep the historical spec: stored E-step, posteriors returned.
+  if (!identical(estep, "stored")) spec$estep <- estep
+  if (!isTRUE(posteriors)) spec$posteriors <- FALSE
+  threads <- .estep_thread_count(estep_threads)
+  if (!identical(threads, 1L)) spec$estep_threads <- threads
+  mode <- .pattern_mode(patterns)
+  if (!identical(mode, "none")) spec$patterns <- mode
   if (!is.null(start)) {
     spec$start <- start
     if (isTRUE(append_start)) {
@@ -64,6 +110,23 @@ lta_spec <- function(n_states, covariance = "VVV", measurement_invariant = TRUE,
     }
   }
   spec
+}
+
+#' Absolute replication test
+#'
+#' Two log-likelihoods are the same solution when
+#' \code{abs(ll - best) <= replicate_tol}. The default \code{0.1} is
+#' chosen to be comparable to the approximately 0.1 tolerance Muthén
+#' described on the Mplus discussion board (2018); Mplus does not document
+#' an exact value. It does not scale with N or with the log-likelihood.
+#' A caller can set \code{replicate_tol}.
+#'
+#' @param ll Log-likelihood to test.
+#' @param best Reference log-likelihood, usually the best one.
+#' @param replicate_tol Absolute gap. Default \code{0.1}.
+#' @export
+logliks_replicate <- function(ll, best, replicate_tol = 0.1) {
+  cpp_logliks_replicate(as.numeric(ll), as.numeric(best), as.numeric(replicate_tol))
 }
 
 #' @export
@@ -230,6 +293,10 @@ fit_lpa <- function(data, indicators, id = NULL, n_states = 2L, covariance = "VV
     id <- "._id"
   }
   spec <- lpa_spec(n_states, covariance = covariance, ...)
+  if (identical(spec$patterns, "compress")) {
+    stop("patterns=\"compress\" is implemented for categorical models only. ",
+         "Gaussian and mixed models stay on patterns=\"none\".", call. = FALSE)
+  }
   spec$family_map <- family
   .fit_model(data, indicators, id, NULL, spec, "lpa")
 }
@@ -310,9 +377,16 @@ tidy.profylr_fit <- function(x, ...) {
   tibble::as_tibble(do.call(rbind, rows))
 }
 
+.require_posteriors <- function(result) {
+  if (isFALSE(result$posteriors_computed)) {
+    stop("posteriors were not computed; refit with posteriors=TRUE", call. = FALSE)
+  }
+}
+
 #' @export
 augment.profylr_fit <- function(x, ...) {
   r <- x$result
+  .require_posteriors(r)
   N <- r$n_subjects
   T <- r$n_waves
   K <- r$K
@@ -345,10 +419,30 @@ estimate_distal <- function(name, family, timing = NULL, wave = NULL,
 #' @export
 decode_states <- function(fit, method = c("smoothed", "filtered", "viterbi")) {
   method <- match.arg(method)
-  aug <- augment(fit)
-  if (method == "viterbi") return(aug[, c("id", "wave", "viterbi_state")])
-  if (method == "filtered") return(aug[, !grepl("^smoothed_", names(aug))])
-  aug
+  result <- fit$result
+  # Stored and streaming-with-posteriors fits keep the historical augment
+  # subset: a tibble, and an excluded subject's -1 becomes 0L.
+  if (!isFALSE(result$posteriors_computed)) {
+    aug <- augment(fit)
+    if (identical(method, "viterbi")) return(aug[, c("id", "wave", "viterbi_state")])
+    if (identical(method, "filtered")) return(aug[, !grepl("^smoothed_", names(aug))])
+    return(aug)
+  }
+  if (!identical(method, "viterbi")) {
+    stop("posteriors were not computed; refit with posteriors=TRUE", call. = FALSE)
+  }
+  width <- as.integer(result$n_waves)
+  n <- as.integer(result$n_subjects)
+  rows <- vector("list", n * width)
+  pos <- 0L
+  for (i in seq_len(n)) for (t in seq_len(width)) {
+    pos <- pos + 1L
+    rows[[pos]] <- tibble::tibble(
+      id = fit$panel$ids[[i]], wave = fit$panel$waves[[t]],
+      viterbi_state = result$viterbi[[(i - 1L) * width + t]] + 1L
+    )
+  }
+  tibble::as_tibble(do.call(rbind, rows))
 }
 
 .comparison_columns <- c(
@@ -372,12 +466,16 @@ decode_states <- function(fit, method = c("smoothed", "filtered", "viterbi")) {
 )
 .warn_tokens <- c(
   "boundary_parameters", "variance_floor", "replication_not_assessed",
-  "ill_conditioned_covariance", "collapsed_component", "numerically_empty_state"
+  "ill_conditioned_covariance", "collapsed_component", "numerically_empty_state",
+  "posteriors_not_computed"
 )
-.measurement_block <- c("not_positive_definite", "collapsed_component", "numerically_empty_state")
+.measurement_block <- c(
+  "not_positive_definite", "collapsed_component", "numerically_empty_state",
+  "posteriors_not_computed"
+)
 .comparison_block <- c(
   "variance_floor", "replication_not_assessed", "not_positive_definite",
-  "collapsed_component", "numerically_empty_state"
+  "collapsed_component", "numerically_empty_state", "posteriors_not_computed"
 )
 .note_only <- c("boundary_parameters", "ill_conditioned_covariance")
 .procedures <- c("model_comparison", "assignment", "measurement", "transitions", "further_starts")
@@ -975,6 +1073,7 @@ posterior_states <- function(fit, kind = c("smoothed", "filtered", "modal")) {
 #' @export
 posterior_transitions <- function(fit) {
   result <- fit$result
+  .require_posteriors(result)
   K <- result$K
   N <- result$n_subjects
   T <- result$n_waves
@@ -1014,6 +1113,7 @@ transition_matrix <- function(fit) {
 #' @export
 state_prevalence <- function(fit, kind = c("model", "posterior", "hard")) {
   kind <- match.arg(kind)
+  if (!identical(kind, "model")) .require_posteriors(fit$result)
   key <- switch(kind, model = "prevalence_model", posterior = "prevalence_posterior", hard = "prevalence_hard")
   values <- fit$result[[key]]
   K <- fit$result$K
@@ -1030,6 +1130,7 @@ state_prevalence <- function(fit, kind = c("model", "posterior", "hard")) {
 #' @export
 expected_counts <- function(fit) {
   result <- fit$result
+  .require_posteriors(result)
   K <- result$K
   membership <- result$expected_membership
   n_waves <- length(membership) / K

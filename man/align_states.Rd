@@ -10,10 +10,10 @@
 align_states(fit, reference)
 }
 \arguments{
-  \item{fit}{Argument \code{fit}.}
-  \item{reference}{Argument \code{reference}.}
+  \item{fit}{A fitted model.}
+  \item{reference}{Fit or parameter list the states are aligned to.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  A list with \code{fit}, the aligned \code{profylr_fit}, and
+  \code{alignment}.
 }

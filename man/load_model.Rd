@@ -10,9 +10,8 @@
 load_model(file)
 }
 \arguments{
-  \item{file}{Argument \code{file}.}
+  \item{file}{Path of a saved model.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  The object stored in the version-1 archive.
 }

@@ -10,10 +10,10 @@
 report_model(x, procedure = NULL)
 }
 \arguments{
-  \item{x}{Argument \code{x}.}
-  \item{procedure}{Argument \code{procedure}. Default: \code{NULL}.}
+  \item{x}{A fit, a selection, or an analyst record.}
+  \item{procedure}{Analysis step the report is attached to. Default: \code{NULL}.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  A character report. A model selection says it is automatic and not
+  an analyst record.
 }

@@ -10,9 +10,9 @@
 enumerate_waves(...)
 }
 \arguments{
-  \item{...}{Argument \code{...}.}
+  \item{...}{Arguments passed to the per-wave grid.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  An object of class \code{profylr_wave_enumeration}.
+  The per-wave tables do not choose the joint number of states.
 }

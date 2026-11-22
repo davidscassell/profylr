@@ -10,10 +10,10 @@
 augment(x, ...)
 }
 \arguments{
-  \item{x}{Argument \code{x}.}
-  \item{...}{Argument \code{...}.}
+  \item{x}{A fitted model.}
+  \item{...}{Unused. Present for the generic.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  A tibble with one row per person-wave and the state and posterior
+  columns.
 }

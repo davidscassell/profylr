@@ -10,10 +10,11 @@
 decode_states(fit, method = c("smoothed", "filtered", "viterbi"))
 }
 \arguments{
-  \item{fit}{Argument \code{fit}.}
-  \item{method}{Argument \code{method}. Default: \code{c("smoothed", "filtered", "viterbi")}.}
+  \item{fit}{A fitted model.}
+  \item{method}{Smoothed, filtered, or Viterbi path.
+    Default: \code{c("smoothed", "filtered", "viterbi")}.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  A data frame of decoded states. Viterbi returns the path. Filtered
+  drops the smoothed columns. Smoothed returns the full augment table.
 }

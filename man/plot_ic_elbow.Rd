@@ -10,9 +10,8 @@
 plot_ic_elbow(selection)
 }
 \arguments{
-  \item{selection}{Argument \code{selection}.}
+  \item{selection}{A selection result.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  A ggplot of the information-criterion elbow.
 }

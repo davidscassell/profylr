@@ -10,9 +10,8 @@
 information_criteria(fit)
 }
 \arguments{
-  \item{fit}{Argument \code{fit}.}
+  \item{fit}{A fitted model.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  A named list of information criteria, sample size, and entropy.
 }

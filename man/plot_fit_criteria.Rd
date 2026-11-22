@@ -10,9 +10,8 @@
 plot_fit_criteria(x)
 }
 \arguments{
-  \item{x}{Argument \code{x}.}
+  \item{x}{Object the method is defined for.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  A ggplot of fit criteria.
 }

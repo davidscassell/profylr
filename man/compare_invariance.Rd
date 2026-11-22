@@ -10,10 +10,9 @@
 compare_invariance(restricted, unrestricted)
 }
 \arguments{
-  \item{restricted}{Argument \code{restricted}.}
-  \item{unrestricted}{Argument \code{unrestricted}.}
+  \item{restricted}{Fit with the restriction imposed.}
+  \item{unrestricted}{Fit without that restriction.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  The likelihood-ratio comparison returned by the core.
 }

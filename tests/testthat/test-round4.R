@@ -30,13 +30,15 @@ test_that("identity and inverse alignment preserve the complete result", {
 test_that("one two and four threads keep the requested count and the same result", {
   y <- c(rnorm(16, -1.5, 0.3), rnorm(16, 1.5, 0.3))
   data <- data.frame(y = y)
-  fits <- lapply(c(1L, 2L, 4L), function(threads) {
+  counts <- c(1L, 2L, 4L)
+  counts <- counts[counts <= thread_limit()]
+  fits <- lapply(counts, function(threads) {
     fit_lpa(data, "y", n_states = 2, covariance = "EEI", n_starts = 2,
             screen_iter = 0, n_full = 2, max_iter = 12, seed = 8,
             align_labels = FALSE, n_threads = threads)
   })
   for (i in seq_along(fits)) {
-    expect_equal(fits[[i]]$result$n_threads, c(1L, 2L, 4L)[[i]])
+    expect_equal(fits[[i]]$result$n_threads, counts[[i]])
     left <- fits[[i]]$result
     right <- fits[[1]]$result
     left$n_threads <- NULL

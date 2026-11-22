@@ -10,10 +10,9 @@
 save_model(x, file)
 }
 \arguments{
-  \item{x}{Argument \code{x}.}
-  \item{file}{Argument \code{file}.}
+  \item{x}{Object to archive.}
+  \item{file}{Path of a saved model.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  The path written, returned invisibly.
 }

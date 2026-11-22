@@ -10,11 +10,10 @@
 lpa_spec(n_states, covariance = "VVV", ...)
 }
 \arguments{
-  \item{n_states}{Argument \code{n_states}.}
-  \item{covariance}{Argument \code{covariance}. Default: \code{"VVV"}.}
-  \item{...}{Argument \code{...}.}
+  \item{n_states}{Number of latent states.}
+  \item{covariance}{Gaussian covariance structure. Default: \code{"VVV"}.}
+  \item{...}{Further specification arguments. See lta_spec.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  A latent profile specification.
 }

@@ -1,15 +1,15 @@
 Package: profylr
 Title: Latent Profiles, Classes, and Transitions
 Version: 0.1.0
-Authors@R: person("David", "S. Cassell", email = "davidscassell@users.noreply.github.com", role = c("aut", "cre"))
-Description: Latent profile, latent class, and latent transition models.
+Authors@R: person("David", "S. Cassell", email = "davidscassell@gmail.com", role = c("aut", "cre"))
+Description: Fits latent profile, latent class, and latent transition models.
     Release 1 estimates a first-order Markov model with a shared C++ core.
     Indicators may be Gaussian, Bernoulli, nominal, or a conditionally
     independent product of one Gaussian block and categorical items.
 License: MIT + file LICENSE
 Copyright: see inst/COPYRIGHTS
 Encoding: UTF-8
-Depends: R (>= 4.3.3)
+Depends: R (>= 4.3.0)
 Imports: Rcpp, tibble, rlang, generics, ggplot2
 LinkingTo: Rcpp
 Suggests: testthat (>= 3.0.0), lavaan, semTools
@@ -19,4 +19,3 @@ BugReports: https://github.com/davidscassell/profylr/issues
 RoxygenNote: 7.3.0
 SystemRequirements: C++17
 NeedsCompilation: yes
-Packaged: 2026-10-25

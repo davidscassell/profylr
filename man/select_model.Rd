@@ -7,17 +7,21 @@
   count are the values documented in the package specification.
 }
 \usage{
-select_model(fits, rule = selection_rule(), auto = TRUE, second_seed_loglik = NULL, second_seed_n_best = NULL, waves = "auto")
+select_model(fits, rule = selection_rule(), auto = TRUE,
+             second_seed_loglik = NULL, second_seed_n_best = NULL,
+             waves = "auto")
 }
 \arguments{
-  \item{fits}{Argument \code{fits}.}
-  \item{rule}{Argument \code{rule}. Default: \code{selection_rule()}.}
-  \item{auto}{Argument \code{auto}. Default: \code{TRUE}.}
-  \item{second_seed_loglik}{Argument \code{second_seed_loglik}. Default: \code{NULL}.}
-  \item{second_seed_n_best}{Argument \code{second_seed_n_best}. Default: \code{NULL}.}
-  \item{waves}{Argument \code{waves}. Default: \code{"auto"}.}
+  \item{fits}{Fitted models to compare or select among.}
+  \item{rule}{Selection thresholds. See selection_rule. Default: \code{selection_rule()}.}
+  \item{auto}{Apply the automatic rule when true. Default: \code{TRUE}.}
+  \item{second_seed_loglik}{Log-likelihood of a second-seed replication.
+    Default: \code{NULL}.}
+  \item{second_seed_n_best}{How many starts hit that second-seed likelihood.
+    Default: \code{NULL}.}
+  \item{waves}{How per-wave diagnostics are included. Default: \code{"auto"}.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  An object of class \code{profylr_model_selection}.
+  An unvalidated bootstrap does not change the chosen model.
 }

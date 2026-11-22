@@ -10,11 +10,10 @@
 add_starts(fit, n_new, seed = 1)
 }
 \arguments{
-  \item{fit}{Argument \code{fit}.}
-  \item{n_new}{Argument \code{n_new}.}
-  \item{seed}{Argument \code{seed}. Default: \code{1}.}
+  \item{fit}{A fitted model.}
+  \item{n_new}{Number of additional starts.}
+  \item{seed}{Random seed. Default: \code{1}.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  A \code{profylr_fit} that includes the additional starts.
 }

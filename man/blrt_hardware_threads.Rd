@@ -13,6 +13,5 @@ blrt_hardware_threads()
   None.
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  The integer hardware thread count reported by the core.
 }

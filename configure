@@ -1,0 +1,25 @@
+#!/bin/sh
+# Generate src/Makevars with contraction disabled. Fail if the compiler
+# cannot take -ffp-contract=off. Omitting the flag is not a fallback.
+set -eu
+cd "$(dirname "$0")"
+R_HOME="${R_HOME:-$(R RHOME)}"
+# Makevars.in sets CXX_STD = CXX17, so the probe uses that compiler.
+CXX=$("${R_HOME}/bin/R" CMD config CXX17)
+CXXSTD=$("${R_HOME}/bin/R" CMD config CXX17STD)
+CXXFLAGS=$("${R_HOME}/bin/R" CMD config CXX17FLAGS)
+if [ -z "$CXX" ]; then
+  echo "configure: R CMD config CXX17 returned an empty compiler" >&2
+  exit 1
+fi
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+printf '%s\n' 'int main() { return 0; }' > "$tmp/conftest.cpp"
+# shellcheck disable=SC2086
+if ! $CXX $CXXSTD $CXXFLAGS -ffp-contract=off -c "$tmp/conftest.cpp" -o "$tmp/conftest.o"; then
+  echo "configure: the C++ compiler rejected -ffp-contract=off" >&2
+  echo "configure: that flag is required so contracted multiply-adds do not change the likelihood" >&2
+  exit 1
+fi
+sed 's/@LTA_FP_CONTRACT@/-ffp-contract=off/' src/Makevars.in > src/Makevars
+echo "configure: LTA_FP_CONTRACT=-ffp-contract=off"

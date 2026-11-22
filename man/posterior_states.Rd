@@ -10,10 +10,11 @@
 posterior_states(fit, kind = c("smoothed", "filtered", "modal"))
 }
 \arguments{
-  \item{fit}{Argument \code{fit}.}
-  \item{kind}{Argument \code{kind}. Default: \code{c("smoothed", "filtered", "modal")}.}
+  \item{fit}{A fitted model.}
+  \item{kind}{Smoothed, filtered, or modal posterior.
+    Default: \code{c("smoothed", "filtered", "modal")}.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  A data frame. Modal returns the modal state. Smoothed and filtered
+  return one probability row per state.
 }

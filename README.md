@@ -2,17 +2,20 @@
 
 Latent profile, latent class, and latent transition models for R. Release 1 uses a C++ EM core that is vendored in this package. The same core is wrapped by [pyfylr](https://github.com/davidscassell/pyfylr).
 
-**BLRT is experimental and unvalidated.** `selection_rule()` keeps `blrt = FALSE`, and a fitted model keeps `validated = FALSE`. Do not use the bootstrap likelihood-ratio test for automatic model selection.
+**BLRT is experimental and unvalidated.** `selection_rule()` keeps `blrt = FALSE`. A bootstrap result keeps `validated = FALSE` until the checks named in that result are shown, and an unvalidated result does not change the selected model. A fitted model does not carry a `validated` flag. Do not use the bootstrap likelihood-ratio test for automatic model selection.
 
 ## Install
 
-This repository is the package. Eigen 3.4.0 is included under `inst/include`. From a checkout, with R 4.3.3 or newer and a C++17 compiler:
+This repository is the package. Eigen 3.4.0 is included under `inst/include`. From a checkout, with R 4.3.0 or newer and a C++17 compiler:
 
 ```bash
 R CMD INSTALL .
 ```
 
-Release 1 supports Linux x86_64 and Apple Silicon. Windows and Intel Mac are deferred and are not supported release targets.
+That command compiles the package from source. It does not select a binary
+distribution. Whether a release includes binaries is undecided.
+
+Release 1 is tested on Linux x86_64 and Apple Silicon. Windows is untested: `configure.win` is included and has not been run on a Windows machine. Intel Mac is untested.
 
 The defaults are 40 random starts, a screen of 10, 4 full starts, `max_iter = 200`, and `tol = 1e-7`.
 

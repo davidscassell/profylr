@@ -9,6 +9,10 @@ cpp_fit <- function(panel, spec) {
     .Call(`_profylr_cpp_fit`, panel, spec)
 }
 
+cpp_logliks_replicate <- function(ll, best, replicate_tol) {
+    .Call(`_profylr_cpp_logliks_replicate`, ll, best, replicate_tol)
+}
+
 cpp_loglik <- function(panel, spec, params) {
     .Call(`_profylr_cpp_loglik`, panel, spec, params)
 }
@@ -73,7 +77,7 @@ cpp_blrt_hardware_threads <- function() {
     .Call(`_profylr_cpp_blrt_hardware_threads`)
 }
 
-cpp_blrt_fit_draws <- function(panels, present, h0, h1, base, max_retries, n_threads) {
-    .Call(`_profylr_cpp_blrt_fit_draws`, panels, present, h0, h1, base, max_retries, n_threads)
+cpp_blrt_fit_draws <- function(panels, present, h0, h1, base, max_retries, n_threads, draws = NULL) {
+    .Call(`_profylr_cpp_blrt_fit_draws`, panels, present, h0, h1, base, max_retries, n_threads, draws)
 }
 

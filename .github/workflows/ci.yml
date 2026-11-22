@@ -23,6 +23,8 @@ jobs:
       - name: Build the source tarball
         run: R CMD build .
       - name: R CMD check the tarball
+        env:
+          NOT_CRAN: "true"
         run: R CMD check --no-manual profylr_*.tar.gz
       - name: Install the tarball outside the checkout
         run: |
@@ -31,5 +33,7 @@ jobs:
           R CMD INSTALL -l "$lib" profylr_*.tar.gz
           echo "PROF_LIB=$lib" >> "$GITHUB_ENV"
       - name: Run the tests against that install
+        env:
+          NOT_CRAN: "true"
         run: |
           Rscript -e 'lib <- Sys.getenv("PROF_LIB"); .libPaths(c(lib, .libPaths())); stopifnot(normalizePath(dirname(find.package("profylr"))) == normalizePath(lib)); testthat::test_dir("tests/testthat", package = "profylr", load_package = "installed")'

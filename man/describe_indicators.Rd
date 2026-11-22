@@ -10,14 +10,15 @@
 describe_indicators(data, indicators, id, wave = NULL, by_wave = FALSE, family = NULL)
 }
 \arguments{
-  \item{data}{Argument \code{data}.}
-  \item{indicators}{Argument \code{indicators}.}
-  \item{id}{Argument \code{id}.}
-  \item{wave}{Argument \code{wave}. Default: \code{NULL}.}
-  \item{by_wave}{Argument \code{by_wave}. Default: \code{FALSE}.}
-  \item{family}{Argument \code{family}. Default: \code{NULL}.}
+  \item{data}{Data frame of observations.}
+  \item{indicators}{Indicator column names.}
+  \item{id}{Subject identifier column.}
+  \item{wave}{Wave column. One occasion when omitted. Default: \code{NULL}.}
+  \item{by_wave}{Repeat the summary on each wave. This does not fit a model.
+    Default: \code{FALSE}.}
+  \item{family}{Named families, or detection when omitted. Default: \code{NULL}.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  A tibble of indicator summaries. \code{by_wave = TRUE} adds one
+  block of rows per wave.
 }

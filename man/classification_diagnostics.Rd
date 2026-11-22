@@ -10,9 +10,9 @@
 classification_diagnostics(fit)
 }
 \arguments{
-  \item{fit}{Argument \code{fit}.}
+  \item{fit}{A fitted model.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  A list of entropy, average posterior, and odds of correct
+  classification.
 }

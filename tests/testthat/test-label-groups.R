@@ -201,12 +201,14 @@ test_that("multiple fit workers match when starts exceed threads", {
     covariance = "EEI", n_starts = 6L, screen_iter = 0L, n_full = 4L,
     max_iter = 4L, seed = 3, align_labels = TRUE
   )
-  fits <- lapply(c(1L, 2L, 4L), function(threads) {
+  counts <- c(1L, 2L, 4L)
+  counts <- counts[counts <= thread_limit()]
+  fits <- lapply(counts, function(threads) {
     do.call(fit_lpa, c(list(data, "y", n_states = 2L, n_threads = threads), controls))
   })
   reference <- fits[[1]]$result
   for (i in seq_along(fits)) {
-    threads <- c(1L, 2L, 4L)[[i]]
+    threads <- counts[[i]]
     out <- fits[[i]]$result
     expect_lt(threads, 6L)
     expect_equal(out$n_threads, threads)

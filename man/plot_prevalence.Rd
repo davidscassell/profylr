@@ -7,12 +7,13 @@
   count are the values documented in the package specification.
 }
 \usage{
-plot_prevalence(fit)
+plot_prevalence(fit, kind = c("posterior", "model", "hard"))
 }
 \arguments{
-  \item{fit}{Argument \code{fit}.}
+  \item{fit}{A fitted model.}
+  \item{kind}{\code{posterior}, \code{model}, or \code{hard}.
+    Default: \code{c("posterior", "model", "hard")}.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  A ggplot of class proportion by wave.
 }

@@ -15,24 +15,28 @@ selection_rule(min_class_prop = NULL, min_class_n = NULL, min_avepp = NULL,
                blrt_max_iter = 1000L, experimental_blrt = FALSE)
 }
 \arguments{
-  \item{min_class_prop}{Argument \code{min_class_prop}. Default: \code{NULL}.}
-  \item{min_class_n}{Argument \code{min_class_n}. Default: \code{NULL}.}
-  \item{min_avepp}{Argument \code{min_avepp}. Default: \code{NULL}.}
-  \item{entropy_filter}{Argument \code{entropy_filter}. Default: \code{FALSE}.}
-  \item{min_entropy}{Argument \code{min_entropy}. Default: \code{0.8}.}
-  \item{primary}{Argument \code{primary}. Default: \code{NULL}.}
-  \item{tie_zone}{Argument \code{tie_zone}. Default: \code{2}.}
-  \item{second_seed_offset}{Argument \code{second_seed_offset}. Default: \code{10007}.}
-  \item{require_second_seed}{Argument \code{require_second_seed}. Default: \code{TRUE}.}
-  \item{blrt}{Argument \code{blrt}. Default: \code{FALSE}.}
-  \item{blrt_B}{Argument \code{blrt_B}. Default: \code{1000}.}
-  \item{blrt_max_retries}{Argument \code{blrt_max_retries}. Default: \code{3}.}
-  \item{blrt_alpha}{Argument \code{blrt_alpha}. Default: \code{0.05}.}
-  \item{blrt_check}{Argument \code{blrt_check}. Default: \code{FALSE}.}
-  \item{blrt_max_iter}{Argument \code{blrt_max_iter}. Default: \code{1000L}.}
-  \item{experimental_blrt}{Argument \code{experimental_blrt}. Default: \code{FALSE}.}
+  \item{min_class_prop}{Smallest class proportion a candidate may have.
+    Default: \code{NULL}.}
+  \item{min_class_n}{Smallest class count a candidate may have. Default: \code{NULL}.}
+  \item{min_avepp}{Smallest average posterior a candidate may have. Default: \code{NULL}.}
+  \item{entropy_filter}{Apply the entropy threshold when true. Default: \code{FALSE}.}
+  \item{min_entropy}{Smallest entropy a candidate may have. Default: \code{0.8}.}
+  \item{primary}{Information criterion used to rank candidates. Default: \code{NULL}.}
+  \item{tie_zone}{How close a runner-up must be to count as a tie. Default: \code{2}.}
+  \item{second_seed_offset}{Seed offset for the replication fit. Default: \code{10007}.}
+  \item{require_second_seed}{Require a second seed to replicate the best likelihood.
+    Default: \code{TRUE}.}
+  \item{blrt}{Run the bootstrap likelihood-ratio test.
+    Default: \code{FALSE}.}
+  \item{blrt_B}{Bootstrap draws requested by the selection rule. Default: \code{1000}.}
+  \item{blrt_max_retries}{Retries on each simulated dataset. Default: \code{3}.}
+  \item{blrt_alpha}{Tail probability for the bootstrap bounds. Default: \code{0.05}.}
+  \item{blrt_check}{Request a bootstrap check of a tie or the chosen model.
+    Default: \code{FALSE}.}
+  \item{blrt_max_iter}{EM cap used inside the bootstrap. Default: \code{1000L}.}
+  \item{experimental_blrt}{Allow a report-only bootstrap during selection.
+    Default: \code{FALSE}.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  A list of the selection thresholds passed to this call.
 }

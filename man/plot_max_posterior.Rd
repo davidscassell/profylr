@@ -10,9 +10,8 @@
 plot_max_posterior(fit)
 }
 \arguments{
-  \item{fit}{Argument \code{fit}.}
+  \item{fit}{A fitted model.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  A ggplot of the maximum posterior.
 }

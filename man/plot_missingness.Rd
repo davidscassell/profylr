@@ -10,13 +10,12 @@
 plot_missingness(data, indicators, id, wave = NULL, family = NULL)
 }
 \arguments{
-  \item{data}{Argument \code{data}.}
-  \item{indicators}{Argument \code{indicators}.}
-  \item{id}{Argument \code{id}.}
-  \item{wave}{Argument \code{wave}. Default: \code{NULL}.}
-  \item{family}{Argument \code{family}. Default: \code{NULL}.}
+  \item{data}{Data frame of observations.}
+  \item{indicators}{Indicator column names.}
+  \item{id}{Subject identifier column.}
+  \item{wave}{Wave column. One occasion when omitted. Default: \code{NULL}.}
+  \item{family}{Named families, or detection when omitted. Default: \code{NULL}.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  A ggplot of missingness.
 }

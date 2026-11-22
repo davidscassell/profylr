@@ -10,9 +10,9 @@
 posterior_transitions(fit)
 }
 \arguments{
-  \item{fit}{Argument \code{fit}.}
+  \item{fit}{A fitted model.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  A data frame of posterior transition probabilities for each person
+  and interval.
 }

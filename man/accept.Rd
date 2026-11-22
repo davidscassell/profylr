@@ -10,10 +10,10 @@
 accept(selection, model_id)
 }
 \arguments{
-  \item{selection}{Argument \code{selection}.}
-  \item{model_id}{Argument \code{model_id}.}
+  \item{selection}{A selection result.}
+  \item{model_id}{Candidate identifier to record.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  The same \code{profylr_model_selection}, with \code{accepted} and
+  \code{accepted_model_id} set.
 }

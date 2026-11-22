@@ -13,6 +13,5 @@ build_info()
   None.
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  A list of compiler and package identifiers for this build.
 }

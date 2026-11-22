@@ -10,10 +10,10 @@
 blrt_null_size(alpha, B)
 }
 \arguments{
-  \item{alpha}{Argument \code{alpha}.}
-  \item{B}{Argument \code{B}.}
+  \item{alpha}{Tail probability used by the bounds.}
+  \item{B}{Number of bootstrap draws.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  The null rejection probability \code{(floor(alpha * B) + 1) / (B + 1)}
+  when every requested draw is kept.
 }

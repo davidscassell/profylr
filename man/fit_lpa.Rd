@@ -7,20 +7,21 @@
   count are the values documented in the package specification.
 }
 \usage{
-fit_lpa(data, indicators, id = NULL, n_states = 2L, covariance = "VVV", family = NULL, ...)
+fit_lpa(data, indicators, id = NULL, n_states = 2L,
+        covariance = "VVV", family = NULL, ...)
 }
 \arguments{
-  \item{data}{Argument \code{data}.}
-  \item{indicators}{Argument \code{indicators}.}
-  \item{id}{Argument \code{id}. Default: \code{NULL}.}
-  \item{n_states}{Argument \code{n_states}. Default: \code{2L}.}
-  \item{covariance}{Argument \code{covariance}. Default: \code{"VVV"}.}
-  \item{family}{Argument \code{family}. Default: \code{NULL}.}
-  \item{...}{Argument \code{...}.}
+  \item{data}{Data frame of observations.}
+  \item{indicators}{Indicator column names.}
+  \item{id}{Subject identifier column. One row per subject when omitted.
+    Default: \code{NULL}.}
+  \item{n_states}{Number of latent states. Default: \code{2L}.}
+  \item{covariance}{Gaussian covariance structure. Default: \code{"VVV"}.}
+  \item{family}{Named families, or detection when omitted. Default: \code{NULL}.}
+  \item{...}{Further specification arguments, including the start schedule.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  An object of class \code{profylr_fit}.
 }
 \examples{
 set.seed(1)

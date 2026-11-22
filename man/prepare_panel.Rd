@@ -11,15 +11,27 @@ prepare_panel(data, indicators, id, wave = NULL, family = NULL,
               schedule = NULL, schema = NULL)
 }
 \arguments{
-  \item{data}{Argument \code{data}.}
-  \item{indicators}{Argument \code{indicators}.}
-  \item{id}{Argument \code{id}.}
-  \item{wave}{Argument \code{wave}. Default: \code{NULL}.}
-  \item{family}{Argument \code{family}. Default: \code{NULL}.}
-  \item{schedule}{Argument \code{schedule}. Default: \code{NULL}.}
-  \item{schema}{Argument \code{schema}. Default: \code{NULL}.}
+  \item{data}{Data frame of observations.}
+  \item{indicators}{Indicator column names.}
+  \item{id}{Subject identifier column.}
+  \item{wave}{Wave column. One occasion when omitted. Default: \code{NULL}.}
+  \item{family}{Named families, or detection when omitted. Default: \code{NULL}.}
+  \item{schedule}{Explicit integer wave codes. With no schedule or schema,
+    numeric waves are filled to \code{seq(min, max)}, so waves 1 and 3
+    become 1, 2, 3. Nonnumeric waves keep first-appearance order.
+    A supplied schema takes precedence over both.
+    Default: \code{NULL}.}
+  \item{schema}{Training schema reused for a later panel. Default: \code{NULL}.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  A list holding the numeric panel passed to the C++ core.
+}
+\examples{
+y <- data.frame(
+  id = c(1, 1, 2, 2),
+  wave = c(1, 2, 1, 2),
+  y = c(0, 1, 1, 0)
+)
+panel <- prepare_panel(y, "y", id = "id", wave = "wave")
+panel$N
 }

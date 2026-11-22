@@ -1,0 +1,10 @@
+CXX_STD = CXX17
+# LTA_FP_CONTRACT is empty in this template. configure writes src/Makevars
+# and sets it to -ffp-contract=off when the compiler accepts that flag.
+# The flag is required: the default GNU dialect contracts multiply-adds.
+# It is not written here, because R CMD check treats it as non-portable
+# in a shipped Makevars. configure fails if the compiler rejects it.
+# NDEBUG and EIGEN_NO_DEBUG turn Eigen's assert checks off on every build.
+LTA_FP_CONTRACT = @LTA_FP_CONTRACT@
+PKG_CXXFLAGS = -I../inst/include -DEIGEN_DONT_PARALLELIZE -DNDEBUG -DEIGEN_NO_DEBUG $(LTA_FP_CONTRACT) -pthread
+PKG_LIBS = -pthread

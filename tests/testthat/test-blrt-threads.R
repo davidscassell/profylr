@@ -17,26 +17,38 @@ test_that("bootstrap draws agree for 1, 2, 4, and the hardware thread count", {
       h0, h1, B = 4L, max_retries = 1L, seed = 19, max_iter = 40L, n_threads = threads
     ))
   }
-  one <- run(1L)
-  two <- run(2L)
-  two_tel <- blrt_last_telemetry()
-  four <- run(4L)
+  limit <- thread_limit()
   hw <- blrt_hardware_threads()
-  cap <- run(hw)
-  expect_equal(one$n_threads, 1L)
-  expect_equal(two$n_threads, 2L)
-  expect_equal(four$n_threads, 4L)
-  expect_equal(cap$n_threads, hw)
-  expect_false("telemetry" %in% names(two))
-  expect_false(any(c("seconds", "n_threads_used") %in% names(two)))
-  expect_equal(two_tel$n_threads_used, min(2L, hw, 4L))
-  if (hw >= 2L) expect_gt(two_tel$n_threads_used, 1L)
+  one <- if (1 <= limit) run(1L) else NULL
+  two <- if (2 <= limit) run(2L) else NULL
+  if (!is.null(one)) expect_equal(one$n_threads, 1L)
+  compared <- list()
+  if (!is.null(two)) {
+    two_tel <- blrt_last_telemetry()
+    expect_equal(two$n_threads, 2L)
+    expect_false("telemetry" %in% names(two))
+    expect_false(any(c("seconds", "n_threads_used") %in% names(two)))
+    expect_equal(two_tel$n_threads_used, min(2L, hw, 4L))
+    if (hw >= 2L) expect_gt(two_tel$n_threads_used, 1L)
+    compared <- list(two)
+  }
+  if (4 <= limit) {
+    four <- run(4L)
+    expect_equal(four$n_threads, 4L)
+    compared <- c(compared, list(four))
+  }
+  if (hw <= limit) {
+    cap <- run(hw)
+    expect_equal(cap$n_threads, hw)
+    compared <- c(compared, list(cap))
+  }
   drop_threads <- function(result) {
     expect_false("telemetry" %in% names(result))
     result$n_threads <- NULL
     result
   }
-  for (other in list(two, four, cap)) {
+  expect_false(is.null(one))
+  for (other in compared) {
     expect_equal(drop_threads(other), drop_threads(one))
     expect_equal(other$p, one$p)
     expect_equal(other$b, one$b)

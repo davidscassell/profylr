@@ -10,10 +10,10 @@
 state_prevalence(fit, kind = c("model", "posterior", "hard"))
 }
 \arguments{
-  \item{fit}{Argument \code{fit}.}
-  \item{kind}{Argument \code{kind}. Default: \code{c("model", "posterior", "hard")}.}
+  \item{fit}{A fitted model.}
+  \item{kind}{Model-implied, posterior, or hard-assignment prevalence.
+    Default: \code{c("model", "posterior", "hard")}.}
 }
 \value{
-  The object documented by the function name. Fitters return a
-  \code{profylr_fit}.
+  A data frame of class proportion by wave and state.
 }

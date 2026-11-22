@@ -32,6 +32,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// cpp_logliks_replicate
+bool cpp_logliks_replicate(double ll, double best, double replicate_tol);
+RcppExport SEXP _profylr_cpp_logliks_replicate(SEXP llSEXP, SEXP bestSEXP, SEXP replicate_tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type ll(llSEXP);
+    Rcpp::traits::input_parameter< double >::type best(bestSEXP);
+    Rcpp::traits::input_parameter< double >::type replicate_tol(replicate_tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_logliks_replicate(ll, best, replicate_tol));
+    return rcpp_result_gen;
+END_RCPP
+}
 // cpp_loglik
 double cpp_loglik(List panel, List spec, List params);
 RcppExport SEXP _profylr_cpp_loglik(SEXP panelSEXP, SEXP specSEXP, SEXP paramsSEXP) {
@@ -196,7 +209,7 @@ List cpp_compare_transitions(List panel, List equal_fit, List free_fit);
 int cpp_blrt_hardware_threads();
 // cpp_blrt_fit_draws
 List cpp_blrt_fit_draws(List panels, LogicalVector present, List h0, List h1, double base,
-                        int max_retries, int n_threads);
+                        int max_retries, int n_threads, Nullable<IntegerVector> draws);
 RcppExport SEXP _profylr_cpp_compare_transitions(SEXP panelSEXP, SEXP equal_fitSEXP, SEXP free_fitSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -245,8 +258,8 @@ END_RCPP
 }
 // cpp_blrt_fit_draws
 List cpp_blrt_fit_draws(List panels, LogicalVector present, List h0, List h1, double base,
-                        int max_retries, int n_threads);
-RcppExport SEXP _profylr_cpp_blrt_fit_draws(SEXP panelsSEXP, SEXP presentSEXP, SEXP h0SEXP, SEXP h1SEXP, SEXP baseSEXP, SEXP max_retriesSEXP, SEXP n_threadsSEXP) {
+                        int max_retries, int n_threads, Nullable<IntegerVector> draws);
+RcppExport SEXP _profylr_cpp_blrt_fit_draws(SEXP panelsSEXP, SEXP presentSEXP, SEXP h0SEXP, SEXP h1SEXP, SEXP baseSEXP, SEXP max_retriesSEXP, SEXP n_threadsSEXP, SEXP drawsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -257,7 +270,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type base(baseSEXP);
     Rcpp::traits::input_parameter< int >::type max_retries(max_retriesSEXP);
     Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(cpp_blrt_fit_draws(panels, present, h0, h1, base, max_retries, n_threads));
+    Rcpp::traits::input_parameter< Nullable<IntegerVector> >::type draws(drawsSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_blrt_fit_draws(panels, present, h0, h1, base, max_retries, n_threads, draws));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -265,6 +279,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_profylr_cpp_build_info", (DL_FUNC) &_profylr_cpp_build_info, 0},
     {"_profylr_cpp_fit", (DL_FUNC) &_profylr_cpp_fit, 2},
+    {"_profylr_cpp_logliks_replicate", (DL_FUNC) &_profylr_cpp_logliks_replicate, 3},
     {"_profylr_cpp_loglik", (DL_FUNC) &_profylr_cpp_loglik, 3},
     {"_profylr_cpp_evaluate", (DL_FUNC) &_profylr_cpp_evaluate, 3},
     {"_profylr_cpp_parse_family", (DL_FUNC) &_profylr_cpp_parse_family, 1},
@@ -281,7 +296,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_profylr_cpp_compare_transitions", (DL_FUNC) &_profylr_cpp_compare_transitions, 3},
     {"_profylr_cpp_split_null_state", (DL_FUNC) &_profylr_cpp_split_null_state, 11},
     {"_profylr_cpp_blrt_hardware_threads", (DL_FUNC) &_profylr_cpp_blrt_hardware_threads, 0},
-    {"_profylr_cpp_blrt_fit_draws", (DL_FUNC) &_profylr_cpp_blrt_fit_draws, 7},
+    {"_profylr_cpp_blrt_fit_draws", (DL_FUNC) &_profylr_cpp_blrt_fit_draws, 8},
     {NULL, NULL, 0}
 };
 

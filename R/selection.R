@@ -33,6 +33,7 @@
   "hard:replication_not_assessed", "hard:best_loglik_not_replicated",
   "hard:higher_admissible_not_replicated",
   "hard:information_criterion_undefined",
+  "hard:posteriors_not_computed",
   "hard:second_seed_not_reproduced", "hard:second_seed_not_replicated",
   "hard:second_seed_not_assessed"
 )
@@ -107,9 +108,10 @@ selection_rule <- function(min_class_prop = NULL, min_class_n = NULL, min_avepp 
   )
 }
 
-# Probability that p = b/B rejects at alpha when every requested draw is kept
-# and the rank of the observed likelihood ratio is uniform on 1, ..., B+1.
-# b <= floor(alpha * B) covers floor(alpha * B) + 1 of those B + 1 ranks.
+# Null rejection probability when every requested draw is kept.
+# The reported BLRT p is b/n_ok (NA when no draw is kept). This helper is
+# that rule when n_ok equals B: (floor(alpha * B) + 1) / (B + 1).
+# The rank of the observed likelihood ratio is uniform on 1, ..., B+1.
 #' @export
 blrt_null_size <- function(alpha, B) {
   if (!is.finite(alpha) || alpha < 0 || alpha > 1) stop("alpha must be in [0, 1]", call. = FALSE)
@@ -118,6 +120,7 @@ blrt_null_size <- function(alpha, B) {
 }
 
 .raw_entropy <- function(result) {
+  if (isFALSE(result$posteriors_computed)) return(c(wave = NA_real_, sequence = NA_real_))
   stored_w <- result$entropy_wave_raw
   stored_s <- result$entropy_sequence_raw
   if (.finite1(stored_w) && .finite1(stored_s)) return(c(wave = stored_w, sequence = stored_s))
@@ -171,7 +174,7 @@ information_criteria <- function(fit) {
   ll <- result$loglik
   waves <- as.integer(result$n_waves %||% 1L)
   supported <- isTRUE(result$ic_supported)
-  raw <- .raw_entropy(result)
+  raw <- if (isFALSE(result$posteriors_computed)) c(wave = NA_real_, sequence = NA_real_) else .raw_entropy(result)
   en <- if (waves >= 2L) raw[["sequence"]] else raw[["wave"]]
   out <- stats::setNames(rep(NA_real_, length(.index_names)), .index_names)
   out <- c(out, list(n = n, n_parameters = p, loglik = if (.finite1(ll)) ll else NA_real_,
@@ -227,6 +230,16 @@ information_criteria <- function(fit) {
 #' @export
 classification_diagnostics <- function(fit) {
   result <- if (inherits(fit, "profylr_fit")) fit$result else fit
+  if (isFALSE(result$posteriors_computed)) {
+    K <- as.integer(result$K %||% 0L)
+    return(list(
+      avepp = rep(NA_real_, K), avepp_matrix = matrix(NA_real_, K, K), min_avepp = NA_real_,
+      occ = rep(NA_real_, K), min_class_prop = NA_real_, min_class_n = NA_real_,
+      entropy_wave = NA_real_, entropy_sequence = NA_real_, entropy_raw = NA_real_,
+      by_wave = data.frame(wave = numeric(), state = integer(), avepp = numeric(), occ = numeric(),
+                           class_n = numeric(), class_prop = numeric(), n_modal = integer())
+    ))
+  }
   panel <- if (inherits(fit, "profylr_fit")) fit$panel else NULL
   K <- as.integer(result$K %||% 0L)
   waves <- as.integer(result$n_waves %||% 1L)
@@ -502,7 +515,7 @@ classification_diagnostics <- function(fit) {
     n_full = as.integer(spec$n_full %||% spec$n_starts %||% 2L),
     max_iter = as.integer(spec$max_iter %||% 200L),
     tol = as.numeric(spec$tol %||% 1e-7),
-    replicate_tol = as.numeric(spec$replicate_tol %||% 1e-3),
+    replicate_tol = as.numeric(spec$replicate_tol %||% 0.1),
     seed = as.numeric(spec$seed %||% 1),
     n_threads = as.integer(spec$n_threads %||% 1L),
     align_labels = if (is.null(spec$align_labels)) TRUE else isTRUE(spec$align_labels)
@@ -765,7 +778,7 @@ classification_diagnostics <- function(fit) {
     n_full = full,
     max_iter = cap,
     tol = as.numeric(spec$tol %||% 1e-7),
-    replicate_tol = as.numeric(spec$replicate_tol %||% 1e-3),
+    replicate_tol = as.numeric(spec$replicate_tol %||% 0.1),
     n_threads = as.integer(spec$n_threads %||% 1L),
     seed = as.numeric(seed),
     align_labels = FALSE
@@ -929,9 +942,9 @@ classification_diagnostics <- function(fit) {
     ", error: ", n_failed_error, "). ",
     failure_text, " ",
     "Successful draws=", n_ok, ". b=", b, ". ",
-    "Mplus TECH14 p=b/B=", format(p, digits = 6),
-    " with B the successful draws. ",
-    "p_plus=(b+1)/(B+1)=", format(p_plus, digits = 6),
+    "Mplus TECH14 p=b/n_ok=", format(p, digits = 6),
+    " with n_ok the kept draws. ",
+    "p_plus=(b+1)/(n_ok+1)=", format(p_plus, digits = 6),
     " is secondary and is not compared with alpha."
   )
   if (isTRUE(warn)) {
@@ -955,14 +968,6 @@ classification_diagnostics <- function(fit) {
   list(p = p, p_plus = p_plus, mc_se = mc_se, p_ci_low = ci[[1]], p_ci_high = ci[[2]], reason = reason)
 }
 
-# Parametric bootstrap likelihood-ratio test. p = b/B is reported.
-# p_plus = (b+1)/(B+1) is secondary. The likelihood is the returned admissible
-# converged start. A rejected start is never substituted. Each bootstrap
-# dataset is simulated once. A retry adds starts on that same dataset.
-# validated stays FALSE until Monte Carlo agreement, shared-dataset
-# likelihoods, and operating characteristics are shown. Independent
-# bootstrap p-values are not required to match. select_model does not let
-# an unvalidated result change the selected model.
 #' @export
 blrt_hardware_threads <- function() {
   as.integer(cpp_blrt_hardware_threads())
@@ -977,7 +982,7 @@ blrt_hardware_threads <- function() {
     n_full = as.integer(n_full),
     max_iter = as.integer(max_iter),
     tol = as.numeric(spec$tol %||% 1e-7),
-    replicate_tol = as.numeric(spec$replicate_tol %||% 1e-3),
+    replicate_tol = as.numeric(spec$replicate_tol %||% 0.1),
     n_threads = 1L,
     seed = 1,
     align_labels = FALSE
@@ -1017,33 +1022,115 @@ blrt_hardware_threads <- function() {
   invisible(NULL)
 }
 
-.blrt_draw_pool <- function(h0, h1, B, max_retries, base, cap, s0, f0, s1, f1, n_threads) {
-  spec <- h0$spec
-  result <- h0$result
-  indicators <- h0$panel$indicators
-  family <- stats::setNames(as.list(h0$panel$family), indicators)
-  wave <- if (identical(h0$model, "lta") || as.integer(result$n_waves) >= 2L) "wave" else NULL
-  frames <- vector("list", as.integer(B))
-  hashes <- character(as.integer(B))
-  present <- logical(as.integer(B))
+.blrt_batch_size <- function(B, n_threads, batch_size) {
+  requested <- as.integer(B)
+  threads <- as.integer(n_threads)
+  if (!is.finite(threads) || threads < 1L) stop("n_threads must be at least 1", call. = FALSE)
+  batch <- if (is.null(batch_size)) threads else as.integer(batch_size)
+  if (!is.finite(batch) || batch < 1L) stop("batch_size must be at least 1", call. = FALSE)
+  if (is.finite(requested) && requested > 0L && batch > requested) batch <- requested
+  batch
+}
+
+.blrt_draw_pool <- function(h0, h1, B, max_retries, base, cap, s0, f0, s1, f1, n_threads,
+                            batch_size = NULL) {
+  requested <- as.integer(B)
+  batch <- .blrt_batch_size(requested, n_threads, batch_size)
+  hashes <- character(requested)
   n <- h0$panel$N
   masks <- .subject_masks(h0$panel)
-  prep_t0 <- proc.time()[["elapsed"]]
-  for (draw in seq_len(as.integer(B))) {
-    set.seed(base + 1000 * draw)
-    donors <- sample.int(n, n, replace = TRUE)
-    frame <- tryCatch(.simulate_fit(h0, donors, masks), error = function(e) NULL)
-    if (is.null(frame)) next
-    prepared <- tryCatch(.prepare_bootstrap_panel(h0, frame), error = function(e) NULL)
-    if (is.null(prepared)) next
-    frames[[draw]] <- prepared
-    hashes[[draw]] <- .dataset_hash(frame)
-    present[[draw]] <- TRUE
-  }
-  seconds_prepare <- proc.time()[["elapsed"]] - prep_t0
   spec0 <- .blrt_fit_spec(h0, s0, f0, cap)
   spec1 <- .blrt_fit_spec(h1, s1, f1, cap)
-  raw <- cpp_blrt_fit_draws(frames, present, spec0, spec1, as.numeric(base), as.integer(max_retries), as.integer(n_threads))
+  seconds_prepare <- 0
+  ok <- logical()
+  reason <- character()
+  lr <- numeric()
+  h0_replicated <- logical()
+  h1_replicated <- logical()
+  h1_best_fit_replicated <- logical()
+  h1_replication_assessed <- logical()
+  attempt_draw <- integer()
+  attempt_retry <- integer()
+  attempt_starts <- integer()
+  attempt_starts_h0 <- integer()
+  attempt_starts_h1 <- integer()
+  attempt_h1_embedded <- logical()
+  worker_jobs <- integer()
+  worker_busy_s <- numeric()
+  n_threads_used <- 1L
+  seconds_convert <- 0
+  seconds_engine <- 0
+  seconds_export <- 0
+  # An exception here, or inside cpp_blrt_fit_draws, leaves this function.
+  # Earlier batches are not returned. R polls the user interrupt between
+  # waves inside one batch. Python's binding does not.
+  starts <- if (requested > 0L) seq(1L, requested, by = batch) else integer()
+  for (start in starts) {
+    stop_at <- min(start + batch - 1L, requested)
+    draws <- if (requested > 0L) seq.int(start, stop_at) else integer()
+    frames <- vector("list", length(draws))
+    present <- logical(length(draws))
+    prep_t0 <- proc.time()[["elapsed"]]
+    for (local in seq_along(draws)) {
+      draw <- draws[[local]]
+      set.seed(base + 1000 * draw)
+      donors <- sample.int(n, n, replace = TRUE)
+      frame <- tryCatch(.simulate_fit(h0, donors, masks), error = function(e) NULL)
+      if (is.null(frame)) next
+      prepared <- tryCatch(.prepare_bootstrap_panel(h0, frame), error = function(e) NULL)
+      if (is.null(prepared)) next
+      frames[[local]] <- prepared
+      hashes[[draw]] <- .dataset_hash(frame)
+      present[[local]] <- TRUE
+    }
+    seconds_prepare <- seconds_prepare + (proc.time()[["elapsed"]] - prep_t0)
+    part <- cpp_blrt_fit_draws(
+      frames, present, spec0, spec1, as.numeric(base), as.integer(max_retries), as.integer(n_threads),
+      as.integer(draws)
+    )
+    rm(frames)
+    ok <- c(ok, part$ok)
+    reason <- c(reason, part$reason)
+    lr <- c(lr, part$lr)
+    h0_replicated <- c(h0_replicated, part$h0_replicated)
+    h1_replicated <- c(h1_replicated, part$h1_replicated)
+    h1_best_fit_replicated <- c(h1_best_fit_replicated, part$h1_best_fit_replicated)
+    h1_replication_assessed <- c(h1_replication_assessed, part$h1_replication_assessed)
+    attempt_draw <- c(attempt_draw, part$attempt_draw)
+    attempt_retry <- c(attempt_retry, part$attempt_retry)
+    attempt_starts <- c(attempt_starts, part$attempt_starts)
+    attempt_starts_h0 <- c(attempt_starts_h0, part$attempt_starts_h0)
+    attempt_starts_h1 <- c(attempt_starts_h1, part$attempt_starts_h1)
+    attempt_h1_embedded <- c(attempt_h1_embedded, part$attempt_h1_embedded)
+    jobs <- as.integer(part$worker_jobs)
+    busy <- as.numeric(part$worker_busy_s)
+    width <- max(length(worker_jobs), length(jobs))
+    if (length(worker_jobs) < width) {
+      worker_jobs <- c(worker_jobs, rep(0L, width - length(worker_jobs)))
+      worker_busy_s <- c(worker_busy_s, rep(0, width - length(worker_busy_s)))
+    }
+    if (length(jobs)) {
+      worker_jobs[seq_along(jobs)] <- worker_jobs[seq_along(jobs)] + jobs
+      worker_busy_s[seq_along(busy)] <- worker_busy_s[seq_along(busy)] + busy
+    }
+    n_threads_used <- max(n_threads_used, as.integer(part$n_threads_used))
+    seconds_convert <- seconds_convert + as.numeric(part$seconds_convert)
+    seconds_engine <- seconds_engine + as.numeric(part$seconds_engine)
+    seconds_export <- seconds_export + as.numeric(part$seconds_export)
+  }
+  raw <- list(
+    ok = ok, reason = reason, lr = lr,
+    h0_replicated = h0_replicated, h1_replicated = h1_replicated,
+    h1_best_fit_replicated = h1_best_fit_replicated,
+    h1_replication_assessed = h1_replication_assessed,
+    attempt_draw = attempt_draw, attempt_retry = attempt_retry,
+    attempt_starts = attempt_starts, attempt_starts_h0 = attempt_starts_h0,
+    attempt_starts_h1 = attempt_starts_h1, attempt_h1_embedded = attempt_h1_embedded,
+    worker_jobs = worker_jobs, worker_busy_s = worker_busy_s,
+    n_threads_used = n_threads_used,
+    seconds_convert = seconds_convert, seconds_engine = seconds_engine,
+    seconds_export = seconds_export
+  )
   asm_t0 <- proc.time()[["elapsed"]]
   lrs <- numeric(as.integer(B))
   lr_draws <- integer(as.integer(B))
@@ -1207,9 +1294,32 @@ blrt_last_telemetry <- function() {
   out
 }
 
+# Parametric bootstrap likelihood-ratio test. p = b/n_ok when at least one
+# draw is kept, and is NA when none is kept. p_plus = (b+1)/(n_ok+1) uses
+# that same count. p_lo and p_hi still divide by the requested B+1.
+# The likelihood is the returned admissible converged start. A rejected start
+# is never substituted. Each bootstrap dataset is simulated once. A retry
+# adds starts on that same dataset. validated stays FALSE until Monte Carlo
+# agreement, shared-dataset likelihoods, and operating characteristics are
+# shown. Independent bootstrap p-values are not required to match.
+# select_model does not let an unvalidated result change the selected model.
+# batch_size bounds how many simulated datasets the threaded pool holds.
+# The default is n_threads. n_threads == 1 still uses the one-draw serial loop.
+#' Bootstrap likelihood-ratio test.
+#'
+#' @param h0,h1 Fitted null and alternative models.
+#' @param B Number of bootstrap draws.
+#' @param max_retries Extra attempts on the same simulated dataset.
+#' @param alpha Tail probability used by the bounds.
+#' @param seed Bootstrap seed. \code{NULL} uses the null fit's seed.
+#' @param max_iter Bootstrap EM cap. \code{NULL} uses the selection rule.
+#' @param n_threads Worker count.
+#' @param experimental Must be \code{TRUE} or the bootstrap does not run.
+#' @param batch_size How many simulated datasets the pool holds at once.
+#'   \code{NULL} uses \code{n_threads}.
 #' @export
 blrt_check <- function(h0, h1, B = 1000, max_retries = 3, alpha = 0.05, seed = NULL, max_iter = NULL,
-                       n_threads = 1L, experimental = FALSE) {
+                       n_threads = 1L, experimental = FALSE, batch_size = NULL) {
   if (!isTRUE(experimental)) {
     message(
       "not run: experimental BLRT requires explicit opt-in (experimental=TRUE). ",
@@ -1310,7 +1420,7 @@ blrt_check <- function(h0, h1, B = 1000, max_retries = 3, alpha = 0.05, seed = N
   lr_draws <- integer()
   telemetry <- list(n_threads_used = 1L)
   if (n_threads > 1L) {
-    pooled <- .blrt_draw_pool(h0, h1, B, max_retries, base, cap, s0, f0, s1, f1, n_threads)
+    pooled <- .blrt_draw_pool(h0, h1, B, max_retries, base, cap, s0, f0, s1, f1, n_threads, batch_size)
     lrs <- pooled$lrs
     lr_draws <- pooled$lr_draws
     out$failures <- pooled$failures
@@ -1534,6 +1644,13 @@ blrt_check <- function(h0, h1, B = 1000, max_retries = 3, alpha = 0.05, seed = N
   }
 }
 
+#' Choose K and covariance jointly.
+#'
+#' Hard filters are convergence, a finite likelihood, an admissible covariance,
+#' and replication of the highest admissible likelihood. A streaming fit that
+#' omitted posteriors is excluded from automatic ranking: it is not eligible,
+#' because `hard:posteriors_not_computed` is recorded and the information
+#' criteria that need a posterior are missing.
 #' @export
 select_model <- function(fits, rule = selection_rule(), auto = TRUE,
                          second_seed_loglik = NULL, second_seed_n_best = NULL, waves = "auto") {
@@ -1583,7 +1700,7 @@ select_model <- function(fits, rule = selection_rule(), auto = TRUE,
       collapsed = isTRUE(result$cov_collapsed_component),
       n_starts = as.integer(result$n_starts %||% 0L),
       n_best = as.integer(result$n_best %||% 0L),
-      replicate_tol = as.numeric(fit$spec$replicate_tol %||% 1e-3),
+      replicate_tol = as.numeric(fit$spec$replicate_tol %||% 0.1),
       fit = fit
     )
     for (name in .index_names) row[[name]] <- ic[[name]]
@@ -1602,6 +1719,7 @@ select_model <- function(fits, rule = selection_rule(), auto = TRUE,
     else if (row$n_best < 2L) tokens <- c(tokens, "hard:best_loglik_not_replicated")
     if (.higher_admissible_hidden(row$fit$result)) tokens <- c(tokens, "hard:higher_admissible_not_replicated")
     if (!.finite1(row[[primary]])) tokens <- c(tokens, "hard:information_criterion_undefined")
+    if (isFALSE(row$fit$result$posteriors_computed)) tokens <- c(tokens, "hard:posteriors_not_computed")
     rows[[i]]$preseed <- tokens
   }
   for (i in seq_along(rows)) {
@@ -1633,7 +1751,8 @@ select_model <- function(fits, rule = selection_rule(), auto = TRUE,
     rows[[i]]$second_seed_loglik <- ll2
     rows[[i]]$second_seed_n_best <- nbest
     if (.finite1(ll2) && rows[[i]]$finite) rows[[i]]$second_seed_abs_gap <- abs(ll2 - rows[[i]]$loglik)
-    if (!.finite1(ll2) || (rows[[i]]$finite && abs(ll2 - rows[[i]]$loglik) > rows[[i]]$replicate_tol)) {
+    if (!.finite1(ll2) || (rows[[i]]$finite && !isTRUE(logliks_replicate(
+        ll2, rows[[i]]$loglik, rows[[i]]$replicate_tol)))) {
       rows[[i]]$preseed <- c(rows[[i]]$preseed, "hard:second_seed_not_reproduced")
     }
     if (nbest < 2L) rows[[i]]$preseed <- c(rows[[i]]$preseed, "hard:second_seed_not_replicated")
@@ -1669,7 +1788,7 @@ select_model <- function(fits, rule = selection_rule(), auto = TRUE,
     ran = FALSE, validated = FALSE, switched = FALSE, ambiguous_kind = "",
     reason = paste0(
       "BLRT is off by default. The procedure follows Mplus TECH14 ",
-      "(p=b/B, and a draw whose best log-likelihood did not replicate is kept). ",
+      "(p=b/n_ok, and a draw whose best log-likelihood did not replicate is kept). ",
       "Independent bootstrap p-values are not required to match. ",
       "validated stays false until Monte Carlo agreement, shared-dataset likelihoods, and operating characteristics are shown. ",
       "An unreplicated kept solution is a diagnostic and is not a validation failure."
@@ -1823,6 +1942,9 @@ plot_ic_elbow <- function(selection) {
 
 .max_posterior_values <- function(fit) {
   result <- if (inherits(fit, "profylr_fit")) fit$result else fit
+  if (isFALSE(result$posteriors_computed)) {
+    stop("posteriors were not computed; refit with posteriors=TRUE", call. = FALSE)
+  }
   gamma <- result$gamma
   K <- as.integer(result$K)
   waves <- as.integer(result$n_waves %||% 1L)
@@ -1839,6 +1961,10 @@ plot_ic_elbow <- function(selection) {
 
 #' @export
 plot_avepp <- function(fit) {
+  result <- if (inherits(fit, "profylr_fit")) fit$result else fit
+  if (isFALSE(result$posteriors_computed)) {
+    stop("posteriors were not computed; refit with posteriors=TRUE", call. = FALSE)
+  }
   diag <- classification_diagnostics(fit)
   matrix_out <- diag$avepp_matrix
   K <- nrow(matrix_out)
@@ -1865,13 +1991,29 @@ plot_max_posterior <- function(fit) {
     ggplot2::labs(x = "Maximum posterior", y = "Person-waves", title = "Assignment certainty")
 }
 
+#' Class proportion by wave.
+#'
+#' @param fit A profylr fit.
+#' @param kind \code{posterior} (expected membership), \code{hard}, or
+#'   \code{model}. Posterior and hard draws require a computed posterior.
+#'   Model-implied prevalence does not.
 #' @export
-plot_prevalence <- function(fit) {
+plot_prevalence <- function(fit, kind = c("posterior", "model", "hard")) {
+  kind <- match.arg(kind)
   result <- fit$result
+  if (!identical(kind, "model")) {
+    if (isFALSE(result$posteriors_computed)) {
+      stop("posteriors were not computed; refit with posteriors=TRUE", call. = FALSE)
+    }
+  }
   K <- as.integer(result$K)
   waves <- as.integer(result$n_waves)
-  membership <- matrix(result$expected_membership, nrow = waves, byrow = TRUE)
-  prop <- membership / result$n_analyzed
+  values <- switch(kind,
+    model = result$prevalence_model,
+    hard = result$prevalence_hard,
+    result$expected_membership / result$n_analyzed
+  )
+  prop <- matrix(values, nrow = waves, byrow = TRUE)
   labels <- if (!is.null(fit$panel$waves) && length(fit$panel$waves) == waves) fit$panel$waves else seq_len(waves)
   rows <- list()
   for (t in seq_len(waves)) for (state in seq_len(K)) {
