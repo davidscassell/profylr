@@ -12,10 +12,14 @@ This repository is the package. Eigen 3.4.0 is included under `inst/include`. Fr
 R CMD INSTALL .
 ```
 
-That command compiles the package from source. It does not select a binary
-distribution. Whether a release includes binaries is undecided.
+That command compiles the package from source. This R package does not
+ship a binary. `configure.win` is included and has not been run on a
+Windows machine, and the Intel Mac build has not been run.
 
-Release 1 is tested on Linux x86_64 and Apple Silicon. Windows is untested: `configure.win` is included and has not been run on a Windows machine. Intel Mac is untested.
+The companion Python package, pyfylr 0.1.0, publishes an sdist and
+CPython 3.11–3.13 wheels for manylinux x86_64, macOS arm64, macOS
+x86_64, and Windows amd64. Those wheels are built and smoke-imported by
+its release workflow. That does not test this R package on those platforms.
 
 The defaults are 40 random starts, a screen of 10, 4 full starts, `max_iter = 200`, and `tol = 1e-7`.
 

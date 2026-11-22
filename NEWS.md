@@ -2,6 +2,8 @@
 
 ## 0.1.0
 
+* A fit with fewer analyzed subjects than `n_states` stops before the
+  core runs. One observed row cannot identify two states.
 * Depends is `R (>= 4.3.0)`. The package was checked on R 4.3.3.
 * `-ffp-contract=off` is written by `configure` / `configure.win` when
   the compiler accepts it. The shipped Makevars template does not

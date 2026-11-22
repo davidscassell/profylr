@@ -271,8 +271,37 @@ prepare_panel <- function(data, indicators, id, wave = NULL, family = NULL, sche
             class = "profylr_fit")
 }
 
+.analyzed_subjects <- function(panel) {
+  n <- as.integer(panel$N)
+  width <- as.integer(panel$T) * as.integer(panel$J)
+  if (n < 1L || width < 1L) return(0L)
+  seen <- logical(n)
+  if (!is.null(panel$gauss)) {
+    ok <- which(is.finite(panel$gauss))
+    if (length(ok)) seen[((ok - 1L) %/% width) + 1L] <- TRUE
+  }
+  if (!is.null(panel$cat)) {
+    ok <- which(panel$cat >= 0L)
+    if (length(ok)) seen[((ok - 1L) %/% width) + 1L] <- TRUE
+  }
+  sum(seen)
+}
+
+.require_identifiable_sample <- function(panel, spec) {
+  k <- as.integer(spec$K)
+  n <- .analyzed_subjects(panel)
+  if (n < k) {
+    stop(
+      "too few analyzed subjects to identify ", k, " states: ",
+      n, " subject(s) have an observed indicator",
+      call. = FALSE
+    )
+  }
+}
+
 .fit_model <- function(data, indicators, id, wave, spec, model) {
   panel <- prepare_panel(data, indicators, id, wave, family = spec$family_map)
+  .require_identifiable_sample(panel, spec)
   .new_fit(cpp_fit(panel, spec), panel, spec, model)
 }
 
