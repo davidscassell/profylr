@@ -13,8 +13,9 @@ R CMD INSTALL .
 ```
 
 That command compiles the package from source. This R package does not
-ship a binary. `configure.win` is included and has not been run on a
-Windows machine, and the Intel Mac build has not been run.
+ship a binary. `configure.win` has been run on the GitHub Actions
+Windows checks (R 4.6.2 and R devel r90926, with Rtools). The Intel Mac
+build has not been run.
 
 The companion Python package, pyfylr 0.1.0, publishes an sdist and
 CPython 3.11–3.13 wheels for manylinux x86_64, macOS arm64, macOS
